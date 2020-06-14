@@ -4,3 +4,7 @@ Webpack v4 plugin for generating AOT ASP.Net Razor partials that can be rendered
 - Will avoid the overhead of additional libraries on the application, where the heavy lifting is done during build and not execution.
 - Allows for a precached initial state from json to be read and supplied to the server application for the Razor code as well as the starting state for the reactjs component, when using redux.
 - Grants the benefits of SEO Optimization as well as the usability and performace of reactjs, without requiring a complete development buy-in.
+
+# version 1.0.3
+- Separation of standard components using non-redux models from advanced templates that make use of redux and initial state
+- Initial development of ViewModel building for C# bound models, to allow for data injection
