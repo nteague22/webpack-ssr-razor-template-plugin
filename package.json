@@ -1,8 +1,8 @@
 {
   "name": "webpack-ssr-razor-template-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Plugin for webpack v4+ to generate templates using react ssr",
-  "main": "index.js",
+  "main": "dist/index.js",
   "repository": "https://www.github.com/nteague22/webpack-ssr-razor-template-plugin",
   "author": "nteague",
   "license": "MIT",
@@ -28,6 +28,7 @@
     "typescript": "^3.9.2"
   },
   "scripts": {
-    "build": "babel -f plugin.js -o dist/plugin.js"
+    "build": "babel src/* -d dist/",
+    "prepublish": "babel --env-name production src/* -d dist/"
   }
 }
