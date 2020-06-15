@@ -69,9 +69,9 @@ export class WebpackTemplatePlugin {
         compiler.hooks.done.tapPromise(`Building ${this.options.templateName} Template`, (stat) => {
             let ops = [];
             for (let tmp of this.options.templates) {
-                let redcr = combineReducers(...tmp.reducers);
+                let redcr = combineReducers(tmp.reducers);
                 let store = createStore(redcr, redcr(), applyMiddleware({}));
-                let render = <Provider store={store}>{createElement(tmp.component)}</Provider>;
+                let render = <Provider store={store}>{tmp.component}</Provider>;
 
                 // for a redux backed template, we build out the razor template as well as the view model
                 ops.push(
