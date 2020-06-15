@@ -93,7 +93,7 @@ export class WebpackTemplatePlugin {
                     ops.push(new Promise((resolve, reject) => {
                         fs.writeFile(
                             path.resolve(this.options.modelPath, `${this.options.modelName.replace('[name]', tmp.name)}.generated.cs`),
-                            buildComponentPropsToViewModel(tmp.model, this.options.modelName.replace('[name]', tmp.name), this.options.modelNamespace),
+                            this.buildComponentPropsToViewModel(tmp.model, this.options.modelName.replace('[name]', tmp.name), this.options.modelNamespace),
                             (err) => {
                                 if (err) {
                                     reject(`${err.message}\n${err.stack}`);
