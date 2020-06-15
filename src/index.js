@@ -39,7 +39,7 @@ export class ComponentModule {
  * A component module that uses redux and needs the initial state to reliably generate the SSR output
  */
 export class ComponentWithReduxModule {
-    constructor({ component = null, model = {}, reducers = {}, name = "" }) {
+    constructor({ component = null, model = {}, reducers = {}, initialState={}, name = "" }) {
         /** @type {import("react").ReactElement|Component} */
         this.component = component;
         this.model = model;
@@ -47,6 +47,7 @@ export class ComponentWithReduxModule {
         this.reducers = reducers;
         /** @type {string} */
         this.name = name;
+        this.initialState = initialState;
     }
 }
 
@@ -71,7 +72,7 @@ export class WebpackTemplatePlugin {
             for (let tmp of this.options.templates || []) {
                 if (tmp) {
                     let redcr = combineReducers(tmp.reducers);
-                    let store = createStore(redcr, redcr(), applyMiddleware());
+                    let store = tmp.initialState && createStore(redcr, tmp.initialState, applyMiddleware()) || createStore(redcr);
                     let render = <Provider store={store}>{tmp.component}</Provider>;
 
                     // for a redux backed template, we build out the razor template as well as the view model
