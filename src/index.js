@@ -143,7 +143,7 @@ export class WebpackTemplatePlugin {
         }
         let outPut = "using System;\nusing System.Collections.Generic;\nusing System.Linq;\n";
         if (namespace) {
-            output += `namespace ${namespace} {\n`;
+            outPut += `namespace ${namespace} {\n`;
         }
         outPut += `public class ${viewModelName} {\n ${propertyDefs.join("\n")}\npublic ${viewModelName}() {\n${constructorLines.join('\n')}\n}\n}`;
         if (namespace) {
