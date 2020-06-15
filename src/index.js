@@ -27,7 +27,7 @@ export const IPluginTemplateOptions = {
  * A component module that is simple and does not need redux or state
  */
 export class ComponentModule {
-    constructor({component=null, name=""}) {
+    constructor({ component = null, name = "" }) {
         /** @type{React.Component | React.ReactElement} */
         this.component = component;
         /** @type {string} */
@@ -39,7 +39,7 @@ export class ComponentModule {
  * A component module that uses redux and needs the initial state to reliably generate the SSR output
  */
 export class ComponentWithReduxModule {
-    constructor({component=null, model={}, reducers={}, name=""}) {
+    constructor({ component = null, model = {}, reducers = {}, name = "" }) {
         /** @type {import("react").ReactElement|Component} */
         this.component = component;
         this.model = model;
@@ -70,7 +70,7 @@ export class WebpackTemplatePlugin {
             let ops = [];
             for (let tmp of this.options.templates) {
                 let redcr = combineReducers(...tmp.reducers);
-                let store = createStore(redcr, redcr({}, null), applyMiddleware({}));
+                let store = createStore(redcr, redcr(), applyMiddleware({}));
                 let render = <Provider store={store}>{createElement(tmp.component)}</Provider>;
 
                 // for a redux backed template, we build out the razor template as well as the view model
@@ -91,8 +91,8 @@ export class WebpackTemplatePlugin {
                 // Using the generated suffix to ensure developer expectations for created files
                 ops.push(new Promise((resolve, reject) => {
                     fs.writeFile(
-                        path.resolve(this.options.modelPath, `${this.options.modelName}.generated.cs`),
-                        buildComponentPropsToViewModel(tmp.model, this.options.modelName, this.options.modelNamespace),
+                        path.resolve(this.options.modelPath, `${this.options.modelName.replace('[name]', tmp.name)}.generated.cs`),
+                        buildComponentPropsToViewModel(tmp.model, this.options.modelName.replace('[name]', tmp.name), this.options.modelNamespace),
                         (err) => {
                             if (err) {
                                 reject(`${err.message}\n${err.stack}`);
@@ -128,9 +128,6 @@ export class WebpackTemplatePlugin {
         for (let pr of Object.keys(jsModel)) {
             let prType = "Object";
             let prName = pr;
-            if (/^[a-z]+/.test(pr)) {
-                prName = pr[0].toLocaleUpperCase() + pr.substring(1);
-            }
             prName = prName.replace(/([a-zA-Z])\-([a-zA-Z])/, "$1$2");
             switch (typeof jsModel[pr]) {
                 case "string":
@@ -149,16 +146,31 @@ export class WebpackTemplatePlugin {
                     prType = "int";
                     break;
 
-                default:
+                case "object":
                     if (util.types.isDate(jsModel[pr])) {
                         prType = "DateTime";
                         break;
                     }
+
+                    if (Array.isArray(jsModel[pr]) {
+                        if (typeof jsModel[pr][0] === "object") {
+                        
+                        prType = "IEnumerable<Object>";
+                        break;
+                        }
+                        if (typeof jsModel[pr][0] === "number") {
+                            prType = "IEnumerable<decimal>";
+                        }
+                    }
+                    break;
+
+                default:
+
             }
 
             propertyDefs.push(`public ${prType} ${prName} { get; set; }`);
         }
-        let outPut = "";
+        let outPut = "using System;\nusing System.Collections.Generic;\nusing System.Linq;\n";
         if (namespace) {
             output += `namespace ${namespace} {\n`;
         }
