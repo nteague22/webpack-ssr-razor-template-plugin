@@ -68,55 +68,59 @@ export class WebpackTemplatePlugin {
         const { outputTemplatePattern, templateName, templatePath, templatePattern, useFilenameForOutput } = this.options;
         compiler.hooks.done.tapPromise(`Building ${this.options.templateName} Template`, (stat) => {
             let ops = [];
-            for (let tmp of this.options.templates) {
-                let redcr = combineReducers(tmp.reducers);
-                let store = createStore(redcr, redcr(), applyMiddleware());
-                let render = <Provider store={store}>{tmp.component}</Provider>;
+            for (let tmp of this.options.templates || []) {
+                if (tmp) {
+                    let redcr = combineReducers(tmp.reducers);
+                    let store = createStore(redcr, redcr(), applyMiddleware());
+                    let render = <Provider store={store}>{tmp.component}</Provider>;
 
-                // for a redux backed template, we build out the razor template as well as the view model
-                ops.push(
-                    new Promise((resolve, reject) => {
+                    // for a redux backed template, we build out the razor template as well as the view model
+                    ops.push(
+                        new Promise((resolve, reject) => {
+                            fs.writeFile(
+                                path.resolve(this.options.templatePath, tmp.name, this.options.templateExtension),
+                                reactSsr.renderToString(render),
+                                (err) => {
+                                    if (err) {
+                                        reject(err.message + "\n" + err.stack);
+                                    }
+                                    resolve();
+                                });
+                        })
+                    );
+
+                    // Using the generated suffix to ensure developer expectations for created files
+                    ops.push(new Promise((resolve, reject) => {
                         fs.writeFile(
-                            path.resolve(this.options.templatePath, tmp.name, this.options.templateExtension),
-                            reactSsr.renderToString(render),
+                            path.resolve(this.options.modelPath, `${this.options.modelName.replace('[name]', tmp.name)}.generated.cs`),
+                            buildComponentPropsToViewModel(tmp.model, this.options.modelName.replace('[name]', tmp.name), this.options.modelNamespace),
                             (err) => {
                                 if (err) {
-                                    reject(err.message + "\n" + err.stack);
+                                    reject(`${err.message}\n${err.stack}`);
                                 }
                                 resolve();
-                            });
-                    })
-                );
-
-                // Using the generated suffix to ensure developer expectations for created files
-                ops.push(new Promise((resolve, reject) => {
-                    fs.writeFile(
-                        path.resolve(this.options.modelPath, `${this.options.modelName.replace('[name]', tmp.name)}.generated.cs`),
-                        buildComponentPropsToViewModel(tmp.model, this.options.modelName.replace('[name]', tmp.name), this.options.modelNamespace),
-                        (err) => {
-                            if (err) {
-                                reject(`${err.message}\n${err.stack}`);
                             }
-                            resolve();
-                        }
-                    );
-                }));
+                        );
+                    }));
+                }
             }
 
-            for (let basic of this.options.basicTemplates) {
-                let outputComp = createElement(basic.component);
-                ops.push(new Promise((resolve, reject) => {
-                    fs.writeFile(
-                        path.resolve(this.options.templatePath, basic.name, this.options.templateExtension),
-                        reactSsr.renderToString(outputComp),
-                        err => {
-                            if (err) {
-                                reject(err.message + '\n' + err.stack);
+            for (let basic of this.options.basicTemplates || []) {
+                if (basic) {
+                    let outputComp = createElement(basic.component);
+                    ops.push(new Promise((resolve, reject) => {
+                        fs.writeFile(
+                            path.resolve(this.options.templatePath, basic.name, this.options.templateExtension),
+                            reactSsr.renderToString(outputComp),
+                            err => {
+                                if (err) {
+                                    reject(err.message + '\n' + err.stack);
+                                }
+                                resolve();
                             }
-                            resolve();
-                        }
-                    );
-                }));
+                        );
+                    }));
+                }
             }
             return Promise.all(ops);
         });
@@ -130,7 +134,7 @@ export class WebpackTemplatePlugin {
             let prType = this.getPropertyType(jsModel[pr]);
             let prName = pr;
             prName = prName.replace(/([a-zA-Z])\-([a-zA-Z])/, "$1$2");
-            
+
             if (prType.startsWith("IEnumerable")) {
                 constructorLines.push(`${prName} = new List<${prType.replace(/^IEnumerable\<(.*)\>$/, "$1")}>();\n`);
             }
@@ -175,7 +179,7 @@ export class WebpackTemplatePlugin {
                 if (Array.isArray(prop)) {
                     return `IEnumerable<${this.getPropertyType(prop[0])}>`;
                 }
-                
+
                 return "Object";
 
             default:
