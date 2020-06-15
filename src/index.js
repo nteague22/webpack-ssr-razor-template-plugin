@@ -78,7 +78,7 @@ export class WebpackTemplatePlugin {
                     ops.push(
                         new Promise((resolve, reject) => {
                             fs.writeFile(
-                                path.resolve(this.options.templatePath, tmp.name, this.options.templateExtension),
+                                path.resolve(this.options.templatePath, `${tmp.name}${this.options.templateExtension}`),
                                 reactSsr.renderToString(render),
                                 (err) => {
                                     if (err) {
