@@ -125,47 +125,14 @@ export class WebpackTemplatePlugin {
 
     buildComponentPropsToViewModel(jsModel, viewModelName, namespace) {
         let propertyDefs = [];
+        let constructorLines = [];
         for (let pr of Object.keys(jsModel)) {
-            let prType = "Object";
+            let prType = this.getPropertyType(jsModel[pr]);
             let prName = pr;
             prName = prName.replace(/([a-zA-Z])\-([a-zA-Z])/, "$1$2");
-            switch (typeof jsModel[pr]) {
-                case "string":
-                    prType = "string";
-                    break;
-
-                case "boolean":
-                    prType = "bool";
-                    break;
-
-                case "number":
-                    if (/\./.test(jsModel[pr].toString())) {
-                        prType = "decimal";
-                        break;
-                    }
-                    prType = "int";
-                    break;
-
-                case "object":
-                    if (util.types.isDate(jsModel[pr])) {
-                        prType = "DateTime";
-                        break;
-                    }
-
-                    if (Array.isArray(jsModel[pr]) {
-                        if (typeof jsModel[pr][0] === "object") {
-                        
-                        prType = "IEnumerable<Object>";
-                        break;
-                        }
-                        if (typeof jsModel[pr][0] === "number") {
-                            prType = "IEnumerable<decimal>";
-                        }
-                    }
-                    break;
-
-                default:
-
+            
+            if (prType.startsWith("IEnumerable")) {
+                constructorLines.push(`${prName} = new List<${prType.replace(/^IEnumerable\<(.*)\>$/, "$1")}>();\n`);
             }
 
             propertyDefs.push(`public ${prType} ${prName} { get; set; }`);
@@ -174,10 +141,45 @@ export class WebpackTemplatePlugin {
         if (namespace) {
             output += `namespace ${namespace} {\n`;
         }
-        outPut += `public class ${viewModelName} {\n ${propertyDefs.join("\n")}\n}`;
+        outPut += `public class ${viewModelName} {\n ${propertyDefs.join("\n")}\npublic ${viewModelName}() {\n${constructorLines.join('\n')}\n}\n}`;
         if (namespace) {
             outPut += `\n}\n`;
         }
         return outPut;
+    }
+
+    /**
+     * Gets the named type of a js model property in .net
+     * @param {any} prop The property to check
+     * @returns {string}
+     */
+    getPropertyType(prop) {
+        switch (typeof prop) {
+            case "string":
+                return "string";
+
+            case "boolean":
+                return "bool";
+
+            case "number":
+                if (prop.toString().indexOf('.') !== -1) {
+                    return "decimal";
+                }
+                return "int";
+
+            case "object":
+                if (util.types.isDate(prop)) {
+                    return "DateTime";
+                }
+
+                if (Array.isArray(prop)) {
+                    return `IEnumerable<${this.getPropertyType(prop[0])}>`;
+                }
+                
+                return "Object";
+
+            default:
+                return "Object";
+        }
     }
 }
