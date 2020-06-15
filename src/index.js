@@ -70,7 +70,7 @@ export class WebpackTemplatePlugin {
             let ops = [];
             for (let tmp of this.options.templates) {
                 let redcr = combineReducers(tmp.reducers);
-                let store = createStore(redcr, redcr(), applyMiddleware({}));
+                let store = createStore(redcr, redcr(), applyMiddleware());
                 let render = <Provider store={store}>{tmp.component}</Provider>;
 
                 // for a redux backed template, we build out the razor template as well as the view model
